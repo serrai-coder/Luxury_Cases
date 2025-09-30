@@ -83,25 +83,60 @@ const OrderForm: React.FC<OrderFormProps> = ({ onOrderSuccess }) => {
 
     // Simulate API call to a Google Sheets Web App
     // Replace WEB_APP_URL with your actual Google Apps Script URL
-    const WEB_APP_URL = 'https://script.google.com/macros/s/your-deployment-id/exec'; 
+    //const WEB_APP_URL = 'https://script.google.com/macros/s/your-deployment-id/exec'; 
     
+    try {    // --- بداية كود الربط مع Notion ---
+    // تعليمات: استبدل القيم التالية بمعلومات Notion الخاصة بك
+    const NOTION_API_KEY = 'ntn_I2933691805aKCkW3RFhge0qnsHHo7yWIsK7tS4Twt03go';
+    const DATABASE_ID = '27e0aedc959d805abb70eeb64a366d09';
+
+    // تحقق للتأكد من أنك قمت بتغيير القيم الافتراضية
+    if (NOTION_API_KEY.startsWith('أدخل_') || DATABASE_ID.startsWith('أدخل_')) {
+      setErrors({ submit: 'الرجاء إعداد مفتاح Notion API ومعرف قاعدة البيانات أولاً.' });
+      setIsLoading(false);
+      return;
+    }
+    
+    // هذا الوسيط (Proxy) ضروري لتجاوز قيود CORS الأمنية في المتصفح
+    // ملاحظة: هذا الحل غير آمن للاستخدام في موقع حقيقي ومنشور
+    const PROXY_URL = 'https://thingproxy.freeboard.io/fetch/';
+    const NOTION_API_URL = `${PROXY_URL}https://api.notion.com/v1/pages`;
+
+    const notionPageData = {
+      parent: { database_id: DATABASE_ID },
+      properties: {
+        'Nom': { title: [{ text: { content: orderDetails.firstName } }] },
+        'Prenom': { rich_text: [{ text: { content: orderDetails.lastName } }] },
+        'Numéro Tel': { phone_number: orderDetails.phone },
+        'Wilaya': { select: { name: orderDetails.wilaya } },
+        'Commune': { rich_text: [{ text: { content: orderDetails.baladiya } }] },
+        'Produit': { rich_text: [{ text: { content: orderDetails.phoneModel } }] }, // تم الربط مع نوع الهاتف
+        'Type de livraison': { select: { name: orderDetails.deliveryType } },
+        'Prix': { number: orderDetails.totalPrice },
+        'Date et Heure': { date: { start: new Date().toISOString() } },
+        'Situation de commande': { select: { name: 'Nouveau' } },
+      },
+    };
+
     try {
-      // In a real scenario, you would use fetch like this:
-      /*
-      const response = await fetch(WEB_APP_URL, {
+      const response = await fetch(NOTION_API_URL, {
         method: 'POST',
-        mode: 'no-cors', // Important for Google Sheets web apps if not configured for CORS
         headers: {
+          'Authorization': `Bearer ${NOTION_API_KEY}`,
           'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28',
         },
-        body: JSON.stringify(orderDetails),
+        body: JSON.stringify(notionPageData),
       });
-      */
 
-      // Simulating a successful submission after 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!response.ok) {
+        // إذا فشل الطلب، حاول قراءة رسالة الخطأ من Notion
+        const errorData = await response.json();
+        console.error('Notion API Error:', errorData);
+        throw new Error(errorData.message || 'فشل الاتصال بواجهة Notion.');
+      }
 
-      console.log('Order submitted successfully', orderDetails);
+      console.log('Order submitted successfully to Notion', orderDetails);
       onOrderSuccess(orderDetails);
 
     } catch (error) {
@@ -109,6 +144,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ onOrderSuccess }) => {
       setErrors({ submit: 'حدث خطأ أثناء إرسال طلبك. الرجاء المحاولة مرة أخرى.' });
     } finally {
       setIsLoading(false);
+    }
+    // --- نهاية كود الربط مع Notion ---
     }
   };
 
