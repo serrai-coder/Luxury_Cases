@@ -75,8 +75,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ onOrderSuccess }) => {
     // لاستخدام آمن، يجب عليك بناء واجهة خلفية (backend).
 
     // 1. أدخل معلومات Notion الخاصة بك هنا
-    const NOTION_API_KEY = '27e0aedc959d805abb70eeb64a366d09'; 
-    const DATABASE_ID = 'ntn_I2933691805aKCkW3RFhge0qnsHHo7yWIsK7tS4Twt03go'; 
+    const NOTION_API_KEY = 'ntn_I2933691805aKCkW3RFhge0qnsHHo7yWIsK7tS4Twt03go'; 
+    const DATABASE_ID = '27e0aedc959d805abb70eeb64a366d09'; 
 
     // 2. التحقق من إدخال المعلومات
     if (NOTION_API_KEY.startsWith('أدخل_') || DATABASE_ID.startsWith('أدخل_')) {
